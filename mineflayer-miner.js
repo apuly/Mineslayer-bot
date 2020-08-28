@@ -6,6 +6,10 @@ class miner
     constructor(bot){
         this.bot = bot;
         this.blockQueue = queue();
+
+        this.bot.on('diggingCompleted', (block) =>{
+            this.blockDigEvent()
+        })
     }
 
     dig(block)
@@ -19,6 +23,8 @@ class miner
         }
 
     }
+
+    
 
     blockDigEvent(bot){
         if(this.blockQueue.length != 0){

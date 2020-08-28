@@ -1,7 +1,7 @@
-
 const mineflayer = require('mineflayer')
 const vec3 = require('vec3')
 const wait = require('wait.for-es6')
+
 const miner = require('./mineflayer-miner')
 const tool_tools = require("./tool_tools")
 const bot = mineflayer.createBot({
@@ -13,14 +13,12 @@ const bot = mineflayer.createBot({
 
 let mcData
 let digger
+
 bot.on('inject_allowed', () =>{
   mcData = require('minecraft-data')("1.16.2")
   digger = new miner.miner(bot)
 })
 
-bot.on('diggingCompleted', (block) =>{
-  digger.blockDigEvent()
-})
 
 bot.on('chat', (username, message) => {
   if (username === bot.username) return
@@ -30,7 +28,6 @@ bot.on('chat', (username, message) => {
         break
   }
 })
-
 
 function dig()
 {
