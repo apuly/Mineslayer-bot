@@ -8,7 +8,6 @@ tool still in development*/
 
 function getDigTools(block)
 {
-    console.log(block)
     var tools;
     //get the possible tools based on the block material
     if(block.material != undefined) {

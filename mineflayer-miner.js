@@ -1,49 +1,73 @@
 const tool_tools = require("./tool_tools")
 const queue = require("queue")
+const { GoalNear, GoalBlock, GoalXZ, GoalY, GoalInvert, GoalFollow } = require('mineflayer-pathfinder').goals
 
-class miner
-{
-    constructor(bot){
-        this.bot = bot;
-        this.blockQueue = queue();
+module.exports = inject
 
-        this.bot.on('diggingCompleted', (block) =>{
-            this.blockDigEvent()
-        })
+function inject (bot, enableMovement = true) {
+    var blockQueue = queue()
+    var outOfReachMove = enableMovement
+
+    bot.on('diggingCompleted', (block) =>{
+        blockDigEvent()
+    })
+
+    bot.on('goal_reached', (goal) => {
+        blockdig()
+    })
+
+    function cancelDigging()
+    {
+        blockQueue.splice()
     }
 
-    dig(block)
+    function digBlock(block)
     {
         //if bot is not digging, start digging.
         //otherwise, add block to dig queue
-        if (this.bot.targetDigBlock == null){
-            this._digblock(block)
+        if (bot.targetDigBlock == null){
+            currentBlock = block
+            blockdig()
         } else {
-            this.blockQueue.push(block)
-        }
-
-    }
-
-    
-
-    blockDigEvent(bot){
-        if(this.blockQueue.length != 0){
-            var next_block = this.blockQueue.pop()
-            this._digblock(next_block)
+            blockQueue.push(block)
         }
     }
 
-    _digblock(block)
+    function enableMove()
     {
-        this.equipBestDigTool(block)
-        this.bot.dig(block, (err) =>{console.log(err)})
+        outOfReachMove = true
     }
 
-    /*function that finds the best digging tool in your inventory for a specific block
-    returns true and puts item in hand if tool is found
-    returns false if no tool was found
-    */
-    equipBestDigTool(block)
+    function disableMove()
+    {
+        outOfReachMove = false
+    }
+
+    function blockDigEvent(bot)
+    {
+        if(blockQueue.length != 0){
+            currentBlock = blockQueue.pop()
+            blockdig()
+        }
+    }
+
+    function blockdig()
+    {
+        if (!bot.canDigBlock(currentBlock)){ //assume block is out of range
+            if (outOfReachMove){
+                var p = currentBlock.position
+                bot.pathfinder.setMovements(bot.defaultMovements)
+                bot.pathfinder.setGoal(new GoalNear(p.x, p.y, p.z, 3))
+            } else {
+                throw "block out of reach"
+            }
+        } else {
+            equipBestDigTool(currentBlock)
+            bot.dig(currentBlock, (err) =>{if (err) {console.log(err)}})
+        }
+    }
+
+    function equipBestDigTool(block)
     {
         var tools = tool_tools.getDigTools(block)
         if (tools == [0] || tools == []){
@@ -51,7 +75,7 @@ class miner
         } else {
         var succes
         for (var tool in tools){
-            var resp = this.bot.equip(tools[tool], 'hand', (err) => {
+            var resp = bot.equip(tools[tool], 'hand', (err) => {
             if (err){
                 return err
             }
@@ -63,8 +87,12 @@ class miner
         return false
         }
     }
+
+    bot.digBlock = digBlock
+    bot.diggerMovementEnable = enableMove
+    bot.diggerMovementDisable = disableMove
+    bot.cancelDingging = cancelDigging
+
+
+    console.log("miner loaded succesfully")
 }
-
-
-exports.miner = miner
-

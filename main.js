@@ -3,6 +3,7 @@ const vec3 = require('vec3')
 const wait = require('wait.for-es6')
 
 const miner = require('./mineflayer-miner')
+const { pathfinder, Movements } = require('mineflayer-pathfinder')
 const tool_tools = require("./tool_tools")
 const bot = mineflayer.createBot({
   host: '127.0.0.1',
@@ -16,7 +17,9 @@ let digger
 
 bot.on('inject_allowed', () =>{
   mcData = require('minecraft-data')("1.16.2")
-  digger = new miner.miner(bot)
+  bot.loadPlugin(pathfinder)
+  bot.loadPlugin(miner)
+  bot.defaultMovements = new Movements(bot, mcData)
 })
 
 
@@ -26,8 +29,22 @@ bot.on('chat', (username, message) => {
     case 'dig':
         dig()
         break
+    case 'furnace':
+      digFurnace()
+      break 
   }
 })
+
+function digFurnace()
+{
+  var furnaceBlock = bot.findBlock({
+    matching: [mcData.blocksByName["furnace"].id],
+    maxDistance: 20
+  })
+  if (furnaceBlock != null){
+    bot.digBlock(furnaceBlock)
+  } else {bot.chat("no furnace found")}
+}
 
 function dig()
 {
@@ -40,7 +57,7 @@ function dig()
       if (block == mcData.findItemOrBlockByName("air")){
         //continue
       } else {
-        digger.dig(block)
+        bot.digBlock(block)
       }
     }
   }
