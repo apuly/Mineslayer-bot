@@ -1,6 +1,7 @@
 const mineflayer = require('mineflayer')
 const vec3 = require('vec3')
 const wait = require('wait.for-es6')
+//const scaffold = require('mineflayer-scaffold')
 
 const miner = require('./mineflayer-miner')
 const { pathfinder, Movements } = require('mineflayer-pathfinder')
@@ -32,6 +33,9 @@ bot.on('chat', (username, message) => {
     case 'furnace':
       digFurnace()
       break 
+    case 'region':
+      digRegion()
+      break
   }
 })
 
@@ -63,5 +67,16 @@ function dig()
   }
 }
 
-
-
+function digRegion()
+{
+  var anchors = bot.findBlocks({
+    matching: [mcData.blocksByName["emerald_block"].id],
+    maxDistance: 40,
+    count: 2
+  })
+  if (anchors == undefined || anchors.length < 2){
+    bot.chat("couldn't find anchors (emerald blocks)")
+  } else {
+    bot.digRegion(anchors[0], anchors[1])
+  }
+}
